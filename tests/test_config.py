@@ -19,7 +19,8 @@ def _write(tmp_path: Path, content: str) -> Path:
 def test_default_config_yaml_is_valid() -> None:
     data = yaml.safe_load(DEFAULT_CONFIG_YAML)
     config = Config(**data)
-    assert config.modelo.nombre == "claude-sonnet-5-5"
+    assert config.modelo.proveedor == "groq"
+    assert config.modelo.nombre == "llama-3.3-70b-versatile"
     assert config.activacion.atajo == "ctrl+alt+j"
     assert config.voz.whisper.modelo == "small"
     assert config.voz.grabacion.duracion_max_segundos == 20
@@ -61,4 +62,4 @@ def test_load_config_invalid_values(tmp_path: Path) -> None:
 def test_load_config_empty_file_uses_defaults(tmp_path: Path) -> None:
     path = _write(tmp_path, "")
     config = load_config(path)
-    assert config.modelo.nombre == "claude-sonnet-5-5"
+    assert config.modelo.nombre == "llama-3.3-70b-versatile"

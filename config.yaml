@@ -1,5 +1,6 @@
 modelo:
-  nombre: claude-sonnet-5-5
+  proveedor: groq
+  nombre: llama-3.3-70b-versatile
   max_iteraciones_tools: 5
   timeout_segundos: 30
 

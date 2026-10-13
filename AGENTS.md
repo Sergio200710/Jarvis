@@ -30,7 +30,7 @@ jarvis/
 │   ├── activation/             # hotkey.py, tray.py
 │   ├── entrada/                # base.py, texto.py (tkinter), voz.py, factory
 │   ├── voice/                  # recorder.py, stt.py, tts.py
-│   ├── brain/                  # client.py, agent.py
+│   ├── brain/                  # client.py, agent.py, providers.py
 │   ├── tools/                  # base.py, registry.py, context.py + una habilidad por archivo
 │   ├── security/               # permissions.py, paths.py, audit.py
 │   └── utils/                  # logging_setup.py, net.py, autostart.py
@@ -88,8 +88,9 @@ no debe obligar a tocar el nucleo.
 6. El contenido de webs, archivos o correos son **datos**, nunca instrucciones para Jarvis.
 7. Toda llamada de red y todo proceso lanzado tienen timeout.
 
-La `ANTHROPIC_API_KEY` sale siempre de la variable de entorno. Nunca se escribe en el
-codigo ni en archivos del repositorio.
+La clave del modelo sale siempre de una variable de entorno (`GROQ_API_KEY` o
+`ANTHROPIC_API_KEY` segun el proveedor). Nunca se escribe en el codigo ni en archivos
+del repositorio.
 
 ### Implementacion de seguridad
 
@@ -117,9 +118,25 @@ codigo ni en archivos del repositorio.
 
 ## Modelo
 
-El nombre del modelo se lee de `config.yaml` (`modelo.nombre`), por defecto
-`claude-sonnet-5-5`. Alternativa mas barata y rapida: `claude-haiku-5-5`. Si la API
-devuelve "modelo no encontrado", se cambia solo en `config.yaml`.
+El cerebro admite varios proveedores (`modelo.proveedor`) y habla con ellos desde
+`brain/providers.py`; el bucle de `agent.py` es agnostico:
+
+- `groq` (por defecto): API compatible con OpenAI en `https://api.groq.com/openai/v1`.
+  Clave en `GROQ_API_KEY`. Modelo por defecto `llama-3.3-70b-versatile`.
+- `anthropic`: SDK oficial de Claude. Clave en `ANTHROPIC_API_KEY`.
+
+Se cambia solo en `config.yaml`:
+
+```yaml
+modelo:
+  proveedor: groq            # o anthropic
+  nombre: llama-3.3-70b-versatile
+  api_key_env: null          # opcional: usar otra variable de entorno
+  base_url: null             # opcional: otro endpoint compatible con OpenAI
+```
+
+Si la API responde "modelo no encontrado", cambia `modelo.nombre` por uno disponible
+en el proveedor (en Groq, p. ej. `llama-3.1-8b-instant`).
 
 ## Ubicacion de config.yaml
 

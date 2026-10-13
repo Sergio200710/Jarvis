@@ -9,12 +9,12 @@ from jarvis.core.errors import BrainError
 API_KEY_ENV = "ANTHROPIC_API_KEY"
 
 
-def create_client(timeout: float):
-    """Crea un cliente de Anthropic leyendo la clave de ANTHROPIC_API_KEY."""
-    api_key = os.environ.get(API_KEY_ENV)
+def create_client(timeout: float, api_key_env: str = API_KEY_ENV):
+    """Crea un cliente de Anthropic leyendo la clave del entorno."""
+    api_key = os.environ.get(api_key_env)
     if not api_key:
         raise BrainError(
-            f"Falta la variable de entorno {API_KEY_ENV}. "
+            f"Falta la variable de entorno {api_key_env}. "
             "Configúrala para que pueda pensar."
         )
     try:

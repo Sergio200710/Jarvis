@@ -1,13 +1,12 @@
-"""Pruebas del bucle de tool calling con un cliente falso."""
+"""Pruebas del bucle de tool calling con un proveedor falso."""
 
 from __future__ import annotations
-
-from types import SimpleNamespace
 
 import pytest
 
 from jarvis.brain.agent import Brain
 from jarvis.brain.client import create_client
+from jarvis.brain.providers import Reply, ToolCall
 from jarvis.config import Config
 from jarvis.core.errors import BrainError
 from jarvis.security.permissions import SecurityManager
@@ -15,19 +14,33 @@ from jarvis.tools.base import ToolSpec
 from jarvis.tools.registry import ToolRegistry
 
 
-class FakeMessages:
-    def __init__(self, responses) -> None:
-        self._responses = list(responses)
-        self.calls: list[dict] = []
+class FakeProvider:
+    def __init__(self, replies) -> None:
+        self._replies = list(replies)
+        self.messages: list | None = None
+        self.systems: list[str] = []
 
-    def create(self, **kwargs):
-        self.calls.append(kwargs)
-        return self._responses.pop(0)
+    def new_messages(self, user_text: str) -> list:
+        self.messages = [{"role": "user", "content": user_text}]
+        return self.messages
 
+    def complete(self, messages: list, system: str) -> Reply:
+        self.systems.append(system)
+        return self._replies.pop(0)
 
-class FakeClient:
-    def __init__(self, responses) -> None:
-        self.messages = FakeMessages(responses)
+    def append_assistant(self, messages: list, reply: Reply) -> None:
+        messages.append({"role": "assistant", "content": reply.raw})
+
+    def append_tool_results(self, messages: list, results) -> None:
+        messages.append(
+            {
+                "role": "user",
+                "content": [
+                    {"type": "tool_result", "tool_use_id": cid, "content": content}
+                    for cid, content in results
+                ],
+            }
+        )
 
 
 def _registry() -> ToolRegistry:
@@ -45,29 +58,34 @@ def _registry() -> ToolRegistry:
 
 
 def test_respond_ejecuta_herramienta(config: Config) -> None:
-    tool_use = SimpleNamespace(type="tool_use", id="tu1", name="eco", input={})
-    primera = SimpleNamespace(content=[tool_use])
-    segunda = SimpleNamespace(content=[SimpleNamespace(type="text", text="Ya está.")])
-    client = FakeClient([primera, segunda])
-    brain = Brain(config, _registry(), client=client)
+    provider = FakeProvider(
+        [
+            Reply(text="", tool_calls=[ToolCall("tu1", "eco", {})], raw="assistant-1"),
+            Reply(text="Ya está."),
+        ]
+    )
+    brain = Brain(config, _registry(), provider=provider)
 
     assert brain.respond("hazlo") == "Ya está."
-    ultimo = client.messages.calls[1]["messages"][-1]
+    ultimo = provider.messages[-1]
     assert ultimo["content"][0]["type"] == "tool_result"
     assert ultimo["content"][0]["content"] == "resultado-tool"
 
 
 def test_respond_sin_herramientas(config: Config) -> None:
-    respuesta = SimpleNamespace(content=[SimpleNamespace(type="text", text="Hola.")])
-    brain = Brain(config, _registry(), client=FakeClient([respuesta]))
+    provider = FakeProvider([Reply(text="Hola.")])
+    brain = Brain(config, _registry(), provider=provider)
     assert brain.respond("hola") == "Hola."
 
 
 def test_herramienta_desconocida_no_rompe(config: Config) -> None:
-    tool_use = SimpleNamespace(type="tool_use", id="tu1", name="noexiste", input={})
-    primera = SimpleNamespace(content=[tool_use])
-    segunda = SimpleNamespace(content=[SimpleNamespace(type="text", text="Vale.")])
-    brain = Brain(config, _registry(), client=FakeClient([primera, segunda]))
+    provider = FakeProvider(
+        [
+            Reply(text="", tool_calls=[ToolCall("tu1", "noexiste", {})]),
+            Reply(text="Vale."),
+        ]
+    )
+    brain = Brain(config, _registry(), provider=provider)
     assert brain.respond("hazlo") == "Vale."
 
 
@@ -94,16 +112,18 @@ def test_brain_respeta_la_confirmacion(config: Config) -> None:
             handler=lambda **kwargs: llamado.append(1) or "hecho",
         )
     )
-    tool_use = SimpleNamespace(type="tool_use", id="tu1", name="peligrosa", input={})
-    primera = SimpleNamespace(content=[tool_use])
-    segunda = SimpleNamespace(content=[SimpleNamespace(type="text", text="Vale.")])
-    client = FakeClient([primera, segunda])
+    provider = FakeProvider(
+        [
+            Reply(text="", tool_calls=[ToolCall("tu1", "peligrosa", {})]),
+            Reply(text="Vale."),
+        ]
+    )
     security = SecurityManager(config, dialog=_DialogFalse(), audit=None)
-    brain = Brain(config, registry, client=client, security=security)
+    brain = Brain(config, registry, provider=provider, security=security)
 
     resultado = brain.respond("borra todo")
 
     assert resultado == "Vale."
     assert llamado == []
-    tool_result = client.messages.calls[1]["messages"][-1]["content"][0]
+    tool_result = provider.messages[-1]["content"][0]
     assert "lo dejo" in tool_result["content"].lower()

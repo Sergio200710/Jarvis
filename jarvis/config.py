@@ -12,7 +12,8 @@ from pydantic import BaseModel, Field, ValidationError
 
 DEFAULT_CONFIG_YAML = """\
 modelo:
-  nombre: claude-sonnet-5-5
+  proveedor: groq
+  nombre: llama-3.3-70b-versatile
   max_iteraciones_tools: 5
   timeout_segundos: 30
 
@@ -66,9 +67,12 @@ seguridad:
 class ModeloConfig(BaseModel):
     """Ajustes del modelo de lenguaje."""
 
-    nombre: str = "claude-sonnet-5-5"
+    proveedor: Literal["anthropic", "groq"] = "groq"
+    nombre: str = "llama-3.3-70b-versatile"
     max_iteraciones_tools: int = Field(default=5, ge=1, le=20)
     timeout_segundos: int = Field(default=30, ge=1, le=300)
+    api_key_env: str | None = None
+    base_url: str | None = None
 
 
 class WhisperConfig(BaseModel):
