@@ -1,0 +1,49 @@
+modelo:
+  nombre: claude-sonnet-5-5
+  max_iteraciones_tools: 5
+  timeout_segundos: 30
+
+voz:
+  idioma: es
+  whisper:
+    modelo: small
+    dispositivo: cpu
+    compute_type: int8
+  tts:
+    voz: null
+    velocidad: 180
+    volumen: 1.0
+  grabacion:
+    duracion_max_segundos: 20
+    umbral_silencio: 0.01
+    silencio_segundos: 1.2
+
+activacion:
+  atajo: "ctrl+alt+j"
+  bandeja: true
+
+entrada:
+  modo: texto
+
+arranque:
+  inicio_automatico: null
+
+carpetas_permitidas:
+  - "C:\\Users\\sergi\\Documents"
+  - "C:\\Users\\sergi\\Desktop"
+
+apps_lista_blanca:
+  - nombre: notepad
+    ruta: notepad.exe
+  - nombre: calculadora
+    ruta: calc.exe
+
+seguridad:
+  confirmar_riesgo:
+    - alto
+  palabras_confirmacion:
+    - "si, hazlo"
+    - "sí, hazlo"
+    - confirma
+    - adelante
+  ruta_audit: logs/audit.log
