@@ -1,6 +1,6 @@
 modelo:
   proveedor: groq
-  nombre: llama-3.3-70b-versatile
+  nombre: openai/gpt-oss-120b
   max_iteraciones_tools: 5
   timeout_segundos: 30
 

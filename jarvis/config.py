@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field, ValidationError
 DEFAULT_CONFIG_YAML = """\
 modelo:
   proveedor: groq
-  nombre: llama-3.3-70b-versatile
+  nombre: openai/gpt-oss-120b
   max_iteraciones_tools: 5
   timeout_segundos: 30
 
@@ -68,7 +68,7 @@ class ModeloConfig(BaseModel):
     """Ajustes del modelo de lenguaje."""
 
     proveedor: Literal["anthropic", "groq"] = "groq"
-    nombre: str = "llama-3.3-70b-versatile"
+    nombre: str = "openai/gpt-oss-120b"
     max_iteraciones_tools: int = Field(default=5, ge=1, le=20)
     timeout_segundos: int = Field(default=30, ge=1, le=300)
     api_key_env: str | None = None

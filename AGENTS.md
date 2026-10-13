@@ -122,7 +122,8 @@ El cerebro admite varios proveedores (`modelo.proveedor`) y habla con ellos desd
 `brain/providers.py`; el bucle de `agent.py` es agnostico:
 
 - `groq` (por defecto): API compatible con OpenAI en `https://api.groq.com/openai/v1`.
-  Clave en `GROQ_API_KEY`. Modelo por defecto `llama-3.3-70b-versatile`.
+  Clave en `GROQ_API_KEY`. Modelo por defecto `openai/gpt-oss-120b` (alternativa mas
+  ligera: `openai/gpt-oss-20b`).
 - `anthropic`: SDK oficial de Claude. Clave en `ANTHROPIC_API_KEY`.
 
 Se cambia solo en `config.yaml`:
@@ -130,13 +131,13 @@ Se cambia solo en `config.yaml`:
 ```yaml
 modelo:
   proveedor: groq            # o anthropic
-  nombre: llama-3.3-70b-versatile
+  nombre: openai/gpt-oss-120b
   api_key_env: null          # opcional: usar otra variable de entorno
   base_url: null             # opcional: otro endpoint compatible con OpenAI
 ```
 
 Si la API responde "modelo no encontrado", cambia `modelo.nombre` por uno disponible
-en el proveedor (en Groq, p. ej. `llama-3.1-8b-instant`).
+en el proveedor (en Groq se consultan en `GET /openai/v1/models`).
 
 ## Ubicacion de config.yaml
 
